@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sözlük & Çeviri</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient-start: #e0e7ff;
+            --bg-gradient-end: #f3f4f6;
+            --card-bg: #ffffff;
+            --navbar-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --text-input: #111827;
+            --placeholder: #9ca3af;
+            --border-color: #e5e7eb;
+            --select-border: #d1d5db;
+            --select-bg: #ffffff;
+            --output-bg: #f9fafb;
+            --swap-btn-bg: #eef2ff;
+            --bottom-bar-bg: #f3f4f6;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --navbar-shadow: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Karanlık Mod Değişkenleri */
+        [data-theme="dark"] {
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e293b;
+            --card-bg: #1e293b;
+            --navbar-bg: #0f172a;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --text-input: #f8fafc;
+            --placeholder: #64748b;
+            --border-color: #334155;
+            --select-border: #475569;
+            --select-bg: #1e293b;
+            --output-bg: #0f172a;
+            --swap-btn-bg: #334155;
+            --bottom-bar-bg: #0f172a;
+            --shadow: rgba(0, 0, 0, 0.3);
+            --navbar-shadow: rgba(0, 0, 0, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-main);
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--navbar-bg);
+            padding: 20px 8%;
+            box-shadow: 0 4px 6px -1px var(--navbar-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4f46e5;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Karanlık Mod Butonu */
+        .theme-toggle {
+            background: var(--swap-btn-bg);
+            border: none;
+            color: #4f46e5;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        /* Main Container */
+        .container {
+            flex: 1;
+            max-width: 1000px;
+            width: 100%;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Translator Box */
+        .translator-box {
+            background: var(--card-bg);
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px var(--shadow);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Lang Selectors */
+        .lang-selectors {
+            display: flex;
+            background: var(--output-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 15px 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        select {
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 1px solid var(--select-border);
+            border-radius: 10px;
+            background-color: var(--select-bg);
+            color: var(--text-main);
+            cursor: pointer;
+            outline: none;
+        }
+
+        select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .swap-btn {
+            background: var(--swap-btn-bg);
+            border: none;
+            color: #4f46e5;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .swap-btn:hover {
+            background: #4f46e5;
+            color: white;
+            transform: rotate(180deg);
+        }
+
+        /* Text Areas */
+        .text-areas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 250px;
+        }
+
+        .input-side {
+            border-right: 1px solid var(--border-color);
+            background: var(--card-bg);
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            padding: 25px;
+            font-size: 18px;
+            outline: none;
+            color: var(--text-input);
+            background: transparent;
+        }
+
+        textarea::placeholder {
+            color: var(--placeholder);
+        }
+
+        .output-side {
+            background: var(--output-bg);
+            padding: 25px;
+            font-size: 18px;
+            white-space: pre-wrap;
+            position: relative;
+            color: var(--text-input);
+        }
+
+        .output-placeholder {
+            color: var(--placeholder);
+        }
+
+        /* Bottom Control */
+        .bottom-bar {
+            padding: 15px 20px;
+            background: var(--bottom-bar-bg);
+            display: flex;
+            justify-content: flex-end;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .translate-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .translate-btn:hover {
+            background: #4338ca;
+        }
+
+        .translate-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .text-areas {
+                grid-template-columns: 1fr;
+            }
+            .input-side {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                min-height: 180px;
+            }
+            .output-side {
+                min-height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">🌐 Canlı Çeviri</div>
+        <!-- Modern Tema Değiştirme Butonu -->
+        <button class="theme-toggle" id="themeToggle" title="Temayı Değiştir">🌙</button>
+    </nav>
+
+    <div class="container">
+        <div class="translator-box">
+            
+            <!-- Dil Seçimi -->
+            <div class="lang-selectors">
+                <select id="srcLang">
+                    <option value="tr">Türkçe</option>
+                    <option value="en" selected>İngilizce</option>
+                    <option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option>
+                    <option value="es">İspanyolca</option>
+                </select>
+
+                <button class="swap-btn" id="swapLang">⇄</button>
+
+                <select id="tgtLang">
+                    <option value="tr" selected>Türkçe</option>
+                    <option value="en">İngilizce</option>
+                    <option value="de">Almanca</option>
+                    <option value="fr">Fransızca</option>
+                    <option value="es">İspanyolca</option>
+                </select>
+            </div>
+
+            <!-- Metin Alanları -->
+            <div class="text-areas">
+                <div class="input-side">
+                    <textarea id="inputText" placeholder="Çevirmek istediğiniz metni buraya yazın..."></textarea>
+                </div>
+                <div class="output-side" id="outputText">
+                    <span class="output-placeholder">Çeviri burada görünecek...</span>
+                </div>
+            </div>
+
+            <!-- Çevir Butonu -->
+            <div class="bottom-bar">
+                <button class="translate-btn" id="translateBtn">Çevir</button>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        © 2026 AI Çeviri Sistemi - Tüm Hakları Saklıdır.
+    </footer>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const translateBtn = document.getElementById('translateBtn');
+        const srcLang = document.getElementById('srcLang');
+        const tgtLang = document.getElementById('tgtLang');
+        const swapLang = document.getElementById('swapLang');
+        const themeToggle = document.getElementById('themeToggle');
+
+        // --- Karanlık Mod Yönetimi ---
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeToggle.innerText = '☀️';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            let theme = document.documentElement.getAttribute('data-theme');
+            if (theme === 'dark') {
+                document.documentElement.removeAttribute('data-theme');
+                themeToggle.innerText = '🌙';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                themeToggle.innerText = '☀️';
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // --- Çeviri Fonksiyonu ---
+        async function doTranslation() {
+            const text = inputText.value.trim();
+            if (!text) {
+                outputText.innerHTML = '<span class="output-placeholder">Çeviri burada görünecek...</span>';
+                return;
+            }
+
+            translateBtn.disabled = true;
+            translateBtn.innerText = 'Çevriliyor...';
+            outputText.style.color = 'var(--placeholder)';
+            outputText.innerText = 'Çevriliyor, lütfen bekleyin...';
+
+            const source = srcLang.value;
+            const target = tgtLang.value;
+            
+            try {
+                const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`);
+                const data = await response.json();
+                
+                if(data.responseData) {
+                    outputText.style.color = 'var(--text-input)';
+                    outputText.innerText = data.responseData.translatedText;
+                } else {
+                    outputText.innerText = "Çeviri sırasında bir hata oluştu.";
+                }
+            } catch (error) {
+                outputText.innerText = "Bağlantı hatası! Lütfen tekrar deneyin.";
+                console.error(error);
+            } finally {
+                translateBtn.disabled = false;
+                translateBtn.innerText = 'Çevir';
+            }
+        }
+
+        translateBtn.addEventListener('click', doTranslation);
+
+        swapLang.addEventListener('click', () => {
+            const temp = srcLang.value;
+            srcLang.value = tgtLang.value;
+            tgtLang.value = temp;
+        });
+
+        inputText.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                doTranslation();
+            }
+        });
+    </script>
+</body>
+</html>
